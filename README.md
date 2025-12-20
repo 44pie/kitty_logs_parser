@@ -1,18 +1,15 @@
 # Kitty Logs Parser
 
 ```
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠒⠦⣄⣠⠶⠞⠳⣆⠀⠀⠀⠀
-⠀⠀⠀⣴⠛⠛⠛⠲⢦⣤⡴⠶⠶⢶⠏⠀⢀⣄⣹⣇⡀⠀⠀⣻⡀⠀⠀⠀
-⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠂⠀⢿⣼⠋⠀⠉⣿⣍⠉⠉⡆⠀⠀
-⠀⠀⠀⢿⡤⠀⠀⠀⠀⠀⠀⠀⠀⠈⠧⠤⠤⠿⢦⣀⣤⠿⠼⠀⣰⠃⠀⠀
-⠀⠀⠀⡾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⠤⠶⢿⡀⠀⠀
-⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣼⡧⠤⠆
-⣠⣤⢼⡧⢤⠀⠀⠀⢠⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⡇⠀⠀⠀⣤⣧⣄⡀
-⠀⠀⢀⡿⠉⠹⡄⠀⠈⠋⠀⠀⠀⣴⠒⡆⠀⠀⠀⠀⠀⠀⠀⣀⣼⠁⠀⠀
-⢠⡞⠉⠛⠀⠀⠹⠶⠶⣄⠀⠀⠀⠈⠉⠀⠀⠀⠀⠀⠀⠀⣀⠾⠉⠙⠒⠀
-⠀⠳⢤⣀⠀⠀⢠⠖⠒⠈⢳⣀⠀⠀⢀⣀⣀⣀⣤⠤⠖⠛⠁⠀⠀⠀⠀⠀
-⠀⠀⠀⢹⡀⠀⠘⠲⠖⠃⣼⠋⠉⠁⠉⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠛⠦⣤⣤⠴⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢠⡾⠲⠶⣤⣀⣠⣤⣤⣤⡿⠛⠿⡴⠾⠛⢻⡆⠀⠀⠀
+⠀⠀⠀⣼⠁⠀⠀⠀⠉⠁⠀⢀⣿⠐⡿⣿⠿⣶⣤⣤⣷⡀⠀⠀
+⠀⠀⠀⢹⡶⠀⠀⠀⠀⠀⠀⠌⢯⣡⣿⣿⣀⣸⣿⣦⢓⡟⠀⠀
+⠀⠀⢀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠹⣍⣭⣾⠁⠀⠀
+⠀⣀⣸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣸⣷⣤⡀
+⠈⠉⠹⣏⡁⠀⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⠀⢀⣸⣇⣀⠀
+⠀⠐⠋⢻⣅⣄⢀⣀⣀⡀⠀⠯⠽⠀⢀⣀⣀⡀⠀⣤⣿⠀⠉⠀
+⠀⠀⠴⠛⠙⣳⠋⠉⠉⠙⣆⠀⠀⢰⡟⠉⠈⠙⢷⠟⠉⠙⠂⠀
+⠀⠀⠀⠀⠀⢻⣄⣠⣤⣴⠟⠛⠛⠛⢧⣤⣤⣀⡾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ```
 
 A powerful Python CLI tool for parsing and analyzing InfoStealer logs (Redline, Raccoon, Vidar, Mars, etc.).
@@ -25,7 +22,8 @@ A powerful Python CLI tool for parsing and analyzing InfoStealer logs (Redline, 
 - Domain filtering to exclude major corporations
 - Search filtering across all data
 - Country-based filtering
-- Multiple export formats (TXT, CSV)
+- Multiple export formats (TXT, CSV, SQLite)
+- SQLite database with incremental append support
 
 Simply run (no external dependencies required):
 ```bash
@@ -57,6 +55,7 @@ python kitty_lp.py -i ./logs -o ./results -d
 | `-c, --country` | Filter by countries (comma-separated) or show available |
 | `-a, --all` | Export all data types |
 | `--csv` | Export to CSV table |
+| `--sqlite` | Export to SQLite database |
 | `-w, --workers` | Number of threads (default: 20) |
 
 ### Examples
@@ -86,9 +85,81 @@ Export everything + CSV:
 python kitty_lp.py -i ./logs -o ./results -a --csv
 ```
 
+Export to SQLite database:
+```bash
+python kitty_lp.py -i ./logs -o ./results --sqlite
+```
+
 Show available countries:
 ```bash
 python kitty_lp.py -i ./logs -o ./results -c
+```
+
+## SQLite Database
+
+The `--sqlite` flag exports all parsed data to a SQLite database file (`full_db.sqlite` in the script directory).
+
+### Features
+
+- **Incremental append**: New logs are added to existing database without duplicates
+- **Full data storage**: Contains all credentials, domains, and metadata
+- **Searchable**: Use standard SQL queries to analyze data
+- **Persistent**: Build a comprehensive database from multiple log directories
+
+### Database Schema
+
+```sql
+CREATE TABLE credentials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    url TEXT,
+    domain TEXT,
+    login TEXT,
+    password TEXT,
+    email TEXT,
+    country TEXT,
+    ip TEXT,
+    log_date TEXT,
+    log_folder TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(url, login, password, log_folder)
+);
+```
+
+### Example Queries
+
+```sql
+-- Count credentials by domain
+SELECT domain, COUNT(*) as count 
+FROM credentials 
+GROUP BY domain 
+ORDER BY count DESC 
+LIMIT 20;
+
+-- Find all PayPal credentials
+SELECT * FROM credentials 
+WHERE url LIKE '%paypal%';
+
+-- Get stats by country
+SELECT country, COUNT(*) as count 
+FROM credentials 
+GROUP BY country 
+ORDER BY count DESC;
+
+-- Export unique passwords
+SELECT DISTINCT password FROM credentials 
+WHERE password != '';
+```
+
+### Usage Tips
+
+```bash
+# Build database from multiple log directories
+python kitty_lp.py -i ./logs1 --sqlite
+python kitty_lp.py -i ./logs2 --sqlite
+python kitty_lp.py -i ./logs3 --sqlite
+
+# Query the database
+sqlite3 full_db.sqlite "SELECT COUNT(*) FROM credentials"
 ```
 
 ## Domain Filter
@@ -125,6 +196,7 @@ python kitty_lp.py -i ./logs -o ./results -d -f my.txt   # uses my.txt
 | `login_pass.txt` | Login:password pairs |
 | `search_*.txt` | Detailed search results |
 | `data.csv` | Full CSV export |
+| `full_db.sqlite` | SQLite database (in script dir) |
 
 When using `-s` filter, files are suffixed with search term (e.g., `domains_paypal.txt`).
 

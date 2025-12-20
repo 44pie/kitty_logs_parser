@@ -73,7 +73,7 @@ python kitty_lp.py -i ./logs -o ./results -d -f
 
 Filter by countries:
 ```bash
-python kitty_lp.py -i ./logs -o ./results -c RU,UA,BY -a
+python kitty_lp.py -i ./logs -o ./results -c CL,PE,AU,US,CA,AR,GB,ZA,JP,DE -a
 ```
 
 Search by keyword:
@@ -144,7 +144,7 @@ logs/
 │   ├── Passwords.txt
 │   ├── Cookies/
 │   └── System.txt
-├── 123457_RU_10.0.0.1_25-12-24/
+├── 123457_US_10.0.0.1_25-12-24/
 │   └── ...
 ```
 

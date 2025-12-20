@@ -26,15 +26,8 @@ A powerful Python CLI tool for parsing and analyzing InfoStealer logs (Redline, 
 - Search filtering across all data
 - Country-based filtering
 - Multiple export formats (TXT, CSV)
-- Pink-themed ASCII art banner
 
-## Installation
-
-```bash
-pip install -r requirements.txt
-```
-
-Or simply run (no external dependencies required):
+Simply run (no external dependencies required):
 ```bash
 python kitty_lp.py -h
 ```

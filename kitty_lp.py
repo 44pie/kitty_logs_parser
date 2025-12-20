@@ -6,6 +6,7 @@ Supports various formats: Redline, Raccoon, Vidar, Mars, etc.
 
 import argparse
 import csv
+import sqlite3
 import sys
 import os
 import re
@@ -23,7 +24,7 @@ GRAY = "\033[90m"
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
-BANNER = f"""{WHITE}
+BANNER = f"""{PINK}
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠒⠦⣄⣠⠶⠞⠳⣆⠀⠀⠀⠀
 ⠀⠀⠀⣴⠛⠛⠛⠲⢦⣤⡴⠶⠶⢶⠏⠀⢀⣄⣹⣇⡀⠀⠀⣻⡀⠀⠀⠀
 ⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠂⠀⢿⣼⠋⠀⠉⣿⣍⠉⠉⡆⠀⠀
@@ -656,6 +657,53 @@ def export_csv(logs: List[ParsedLog], output_file: str, search_filter: Optional[
     return count
 
 
+def export_sqlite(logs: List[ParsedLog], db_path: str, search_filter: Optional[str] = None):
+    """Export to SQLite database (appends to existing data)"""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS credentials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        domain TEXT,
+        url TEXT,
+        login TEXT,
+        password TEXT,
+        browser TEXT,
+        country TEXT,
+        windows TEXT,
+        computer TEXT,
+        ip TEXT,
+        log_folder TEXT,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_domain ON credentials(domain)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_login ON credentials(login)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_country ON credentials(country)''')
+    
+    count = 0
+    for log in logs:
+        info = log.system_info
+        for cred in log.credentials:
+            if not matches_search(cred, search_filter):
+                continue
+            cursor.execute('''INSERT INTO credentials 
+                (domain, url, login, password, browser, country, windows, computer, ip, log_folder)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (extract_domain(cred.host), cred.host, cred.login, cred.password,
+                 cred.soft, info.country, info.windows, info.computer_name,
+                 info.ip, log.folder_name))
+            count += 1
+    
+    conn.commit()
+    
+    cursor.execute('SELECT COUNT(*) FROM credentials')
+    total = cursor.fetchone()[0]
+    
+    conn.close()
+    return count, total
+
+
 def print_stats(stats: Dict, logs: List[ParsedLog], search_filter: Optional[str] = None, domain_filter: Optional[Set[str]] = None):
     """Print statistics with filters applied"""
     print(f"{PINK}{'─' * 50}{RESET}")
@@ -762,6 +810,9 @@ def main():
     
     parser.add_argument('--csv', action='store_true',
                        help='Export to CSV table')
+    
+    parser.add_argument('--sqlite', action='store_true',
+                       help='Export to SQLite database (full_db.sqlite in script dir)')
     
     parser.add_argument('-w', '--workers', type=int, default=20,
                        help='Number of threads (default: 20)')
@@ -888,6 +939,12 @@ def main():
         count = export_csv(logs, str(file_path), search_filter)
         exported.append(f"CSV: {count:,} rows -> {file_path}")
     
+    if args.sqlite:
+        script_dir = Path(__file__).parent
+        db_path = script_dir / 'full_db.sqlite'
+        added, total = export_sqlite(logs, str(db_path), search_filter)
+        exported.append(f"SQLite: +{added:,} rows (total: {total:,}) -> {db_path}")
+    
     print_stats(stats, logs, search_filter, domain_filter if domain_filter else None)
     
     print(f"\n{PINK}{'─' * 50}{RESET}")
@@ -898,7 +955,7 @@ def main():
         for exp in exported:
             print(f"{WHITE}{exp}{RESET}")
     else:
-        print(f"{GRAY}No export options specified. Use -d, -p, -e, -ep, -l, -lp, -s, -a, --csv{RESET}")
+        print(f"{GRAY}No export options specified. Use -d, -p, -e, -ep, -l, -lp, -s, -a, --csv, --sqlite{RESET}")
     
     print(f"\n{GRAY}Execution time: {WHITE}{elapsed:.1f}s{RESET}")
 

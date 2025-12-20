@@ -1,0 +1,2 @@
+# Kitty Logs Parser - Requirements
+# No external dependencies required - uses Python standard library only

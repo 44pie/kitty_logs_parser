@@ -17,6 +17,15 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Set, Dict, Tuple
 from collections import defaultdict
 
+# Windows ANSI color support
+if sys.platform == "win32":
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+    except:
+        pass
+
 # ANSI Colors
 PINK = "\033[38;5;213m"
 WHITE = "\033[97m"

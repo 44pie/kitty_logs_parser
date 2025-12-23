@@ -34,15 +34,11 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 BANNER = f"""{WHITE}
-⠀⠀⠀⢠⡾⠲⠶⣤⣀⣠⣤⣤⣤⡿⠛⠿⡴⠾⠛⢻⡆⠀⠀⠀
-⠀⠀⠀⣼⠁⠀⠀⠀⠉⠁⠀⢀⣿⠐⡿⣿⠿⣶⣤⣤⣷⡀⠀⠀
-⠀⠀⠀⢹⡶⠀⠀⠀⠀⠀⠀⠌⢯⣡⣿⣿⣀⣸⣿⣦⢓⡟⠀⠀
-⠀⠀⢀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠹⣍⣭⣾⠁⠀⠀
-⠀⣀⣸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣸⣷⣤⡀
-⠈⠉⠹⣏⡁⠀⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⠀⢀⣸⣇⣀⠀
-⠀⠐⠋⢻⣅⣄⢀⣀⣀⡀⠀⠯⠽⠀⢀⣀⣀⡀⠀⣤⣿⠀⠉⠀
-⠀⠀⠴⠛⠙⣳⠋⠉⠉⠙⣆⠀⠀⢰⡟⠉⠈⠙⢷⠟⠉⠙⠂⠀
-⠀⠀⠀⠀⠀⢻⣄⣠⣤⣴⠟⠛⠛⠛⢧⣤⣤⣀⡾⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  /\_/\  
+ ( o.o ) 
+  > ^ <
+ /|   |\
+(_|   |_)
 
 {PINK}KITTY LOGS PARSER{RESET}
 {GRAY}InfoStealer Log Analyzer v1.0{RESET}
@@ -817,8 +813,8 @@ def main():
     parser.add_argument('--csv', action='store_true',
                        help='Export to CSV table')
     
-    parser.add_argument('--sqlite', action='store_true',
-                       help='Export to SQLite database (full_db.sqlite in script dir)')
+    parser.add_argument('--sqlite', nargs='?', const='full_db.sqlite', default=None,
+                       help='Export to SQLite database (default: full_db.sqlite)')
     
     parser.add_argument('-w', '--workers', type=int, default=20,
                        help='Number of threads (default: 20)')
@@ -875,7 +871,7 @@ def main():
     domain_filter = set()
     if args.filter:
         if args.filter == 'auto':
-            script_dir = Path(__file__).parent
+            # Use provided path or default
             filter_path = script_dir / 'filter.txt'
         else:
             filter_path = Path(args.filter)
@@ -946,8 +942,8 @@ def main():
         exported.append(f"CSV: {count:,} rows -> {file_path}")
     
     if args.sqlite:
-        script_dir = Path(__file__).parent
-        db_path = script_dir / 'full_db.sqlite'
+        # Use provided path or default
+        db_path = Path(args.sqlite)
         added, total = export_sqlite(logs, str(db_path), search_filter)
         exported.append(f"SQLite: +{added:,} rows (total: {total:,}) -> {db_path}")
     

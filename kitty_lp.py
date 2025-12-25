@@ -761,6 +761,7 @@ def print_stats(stats: Dict, logs: List[ParsedLog], search_filter: Optional[str]
 
 def main():
     print(BANNER)
+    script_dir = Path(__file__).parent
     
     parser = argparse.ArgumentParser(
         description=f'{PINK}Kitty Logs Parser{RESET} - InfoStealer Log Analyzer',

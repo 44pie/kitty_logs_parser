@@ -17,15 +17,6 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Set, Dict, Tuple
 from collections import defaultdict
 
-# Windows ANSI color support
-if sys.platform == "win32":
-    try:
-        import ctypes
-        kernel32 = ctypes.windll.kernel32
-        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
-    except:
-        pass
-
 # ANSI Colors
 PINK = "\033[38;5;213m"
 WHITE = "\033[97m"
@@ -34,15 +25,18 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 BANNER = f"""{PINK}
-⠀⠀⠀⢠⡾⠲⠶⣤⣀⣠⣤⣤⣤⡿⠛⠿⡴⠾⠛⢻⡆⠀⠀⠀
-⠀⠀⠀⣼⠁⠀⠀⠀⠉⠁⠀⢀⣿⠐⡿⣿⠿⣶⣤⣤⣷⡀⠀⠀
-⠀⠀⠀⢹⡶⠀⠀⠀⠀⠀⠀⠌⢯⣡⣿⣿⣀⣸⣿⣦⢓⡟⠀⠀
-⠀⠀⢀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠹⣍⣭⣾⠁⠀⠀
-⠀⣀⣸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣸⣷⣤⡀
-⠈⠉⠹⣏⡁⠀⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⣿⡇⠀⢀⣸⣇⣀⠀
-⠀⠐⠋⢻⣅⣄⢀⣀⣀⡀⠀⠯⠽⠀⢀⣀⣀⡀⠀⣤⣿⠀⠉⠀
-⠀⠀⠴⠛⠙⣳⠋⠉⠉⠙⣆⠀⠀⢰⡟⠉⠈⠙⢷⠟⠉⠙⠂⠀
-⠀⠀⠀⠀⠀⢻⣄⣠⣤⣴⠟⠛⠛⠛⢧⣤⣤⣀⡾⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠒⠦⣄⣠⠶⠞⠳⣆⠀⠀⠀⠀
+⠀⠀⠀⣴⠛⠛⠛⠲⢦⣤⡴⠶⠶⢶⠏⠀⢀⣄⣹⣇⡀⠀⠀⣻⡀⠀⠀⠀
+⠀⠀⠀⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠂⠀⢿⣼⠋⠀⠉⣿⣍⠉⠉⡆⠀⠀
+⠀⠀⠀⢿⡤⠀⠀⠀⠀⠀⠀⠀⠀⠈⠧⠤⠤⠿⢦⣀⣤⠿⠼⠀⣰⠃⠀⠀
+⠀⠀⠀⡾⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠳⠤⠶⢿⡀⠀⠀
+⠀⠀⢸⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣼⡧⠤⠆
+⣠⣤⢼⡧⢤⠀⠀⠀⢠⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⡇⠀⠀⠀⣤⣧⣄⡀
+⠀⠀⢀⡿⠉⠹⡄⠀⠈⠋⠀⠀⠀⣴⠒⡆⠀⠀⠀⠀⠀⠀⠀⣀⣼⠁⠀⠀
+⢠⡞⠉⠛⠀⠀⠹⠶⠶⣄⠀⠀⠀⠈⠉⠀⠀⠀⠀⠀⠀⠀⣀⠾⠉⠙⠒⠀
+⠀⠳⢤⣀⠀⠀⢠⠖⠒⠈⢳⣀⠀⠀⢀⣀⣀⣀⣤⠤⠖⠛⠁⠀⠀⠀⠀⠀
+⠀⠀⠀⢹⡀⠀⠘⠲⠖⠃⣼⠋⠉⠁⠉⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠛⠦⣤⣤⠴⠞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 {WHITE}KITTY LOGS PARSER{RESET}
 {GRAY}InfoStealer Log Analyzer v1.0{RESET}
@@ -638,7 +632,7 @@ def export_csv(logs: List[ParsedLog], output_file: str, search_filter: Optional[
     
     count = 0
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, quoting=csv.QUOTE_ALL, escapechar='\\')
         writer.writeheader()
         
         for log in logs:
@@ -761,7 +755,6 @@ def print_stats(stats: Dict, logs: List[ParsedLog], search_filter: Optional[str]
 
 def main():
     print(BANNER)
-    script_dir = Path(__file__).parent
     
     parser = argparse.ArgumentParser(
         description=f'{PINK}Kitty Logs Parser{RESET} - InfoStealer Log Analyzer',
@@ -818,8 +811,8 @@ def main():
     parser.add_argument('--csv', action='store_true',
                        help='Export to CSV table')
     
-    parser.add_argument('--sqlite', nargs='?', const='full_db.sqlite', default=None,
-                       help='Export to SQLite database (default: full_db.sqlite)')
+    parser.add_argument('--sqlite', action='store_true',
+                       help='Export to SQLite database (full_db.sqlite in script dir)')
     
     parser.add_argument('-w', '--workers', type=int, default=20,
                        help='Number of threads (default: 20)')
@@ -876,7 +869,7 @@ def main():
     domain_filter = set()
     if args.filter:
         if args.filter == 'auto':
-            # Use provided path or default
+            script_dir = Path(__file__).parent
             filter_path = script_dir / 'filter.txt'
         else:
             filter_path = Path(args.filter)
@@ -947,8 +940,8 @@ def main():
         exported.append(f"CSV: {count:,} rows -> {file_path}")
     
     if args.sqlite:
-        # Use provided path or default
-        db_path = Path(args.sqlite)
+        script_dir = Path(__file__).parent
+        db_path = script_dir / 'full_db.sqlite'
         added, total = export_sqlite(logs, str(db_path), search_filter)
         exported.append(f"SQLite: +{added:,} rows (total: {total:,}) -> {db_path}")
     

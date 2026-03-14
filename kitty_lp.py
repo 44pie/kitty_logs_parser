@@ -2,10 +2,12 @@
 """
 Kitty Logs Parser - InfoStealer Log Analyzer
 Supports various formats: Redline, Raccoon, Vidar, Mars, etc.
+Also supports JSON-based format (Browser_Chrome_Default/Passwords.json, Info.json)
 """
 
 import argparse
 import csv
+import json
 import sqlite3
 import sys
 import os
@@ -239,8 +241,151 @@ def parse_system_info(content: str) -> SystemInfo:
     return info
 
 
+def _read_json_safe(path: Path):
+    """Read JSON file, return parsed object or None"""
+    for enc in ('utf-8', 'utf-8-sig', 'latin-1'):
+        try:
+            return json.loads(path.read_text(encoding=enc, errors='ignore'))
+        except Exception:
+            continue
+    return None
+
+
+def parse_json_info(folder: Path) -> SystemInfo:
+    """Parse Info.json (modern stealer format)"""
+    info = SystemInfo()
+    info_path = folder / 'Info.json'
+    if not info_path.exists():
+        return info
+    data = _read_json_safe(info_path)
+    if not isinstance(data, dict):
+        return info
+
+    def _get(*keys):
+        for k in keys:
+            for dk in data:
+                if dk.lower() == k.lower():
+                    v = data[dk]
+                    if isinstance(v, str) and v.strip():
+                        return v.strip()
+        return ""
+
+    info.country       = _get('country', 'location', 'geo')
+    info.ip            = _get('ip', 'external_ip', 'externalip', 'public_ip')
+    info.computer_name = _get('computer_name', 'computername', 'computer', 'hostname', 'pc')
+    info.user_name     = _get('user_name', 'username', 'user', 'account')
+    info.windows       = _get('windows', 'os', 'system', 'platform')
+    info.hwid          = _get('hwid', 'machine_id', 'machineid', 'uuid', 'guid')
+    info.antivirus     = _get('antivirus', 'av', 'defender')
+    info.processor     = _get('cpu', 'processor')
+    info.ram           = _get('ram', 'memory')
+    info.videocard     = _get('gpu', 'video', 'videocard', 'graphics')
+    info.resolution    = _get('resolution', 'screen')
+    info.date          = _get('date', 'time', 'timestamp')
+
+    if not info.country:
+        full_text = json.dumps(data)
+        match = re.search(r'"country":\s*"([A-Za-z]{2,})"', full_text, re.IGNORECASE)
+        if match:
+            info.country = match.group(1).upper()[:2]
+
+    return info
+
+
+def parse_json_passwords(folder: Path) -> List[Credential]:
+    """Parse Passwords.json files from Browser_* subdirectories"""
+    credentials = []
+
+    FIELD_MAP_URL  = ['url', 'uri', 'host', 'site', 'link', 'domain', 'origin']
+    FIELD_MAP_USER = ['login', 'username', 'user', 'email', 'mail', 'account', 'name']
+    FIELD_MAP_PASS = ['password', 'pass', 'pwd', 'secret']
+
+    def _pick(obj: dict, keys: list) -> str:
+        for k in keys:
+            for dk in obj:
+                if dk.lower() == k.lower():
+                    v = obj[dk]
+                    if isinstance(v, str) and v.strip():
+                        return v.strip()
+        return ""
+
+    for sub in folder.iterdir():
+        if not sub.is_dir():
+            continue
+        sub_lower = sub.name.lower()
+        is_browser = sub_lower.startswith('browser_')
+        soft_name = sub.name.replace('Browser_', '').replace('browser_', '')
+
+        pw_json = sub / 'Passwords.json'
+        if pw_json.exists():
+            data = _read_json_safe(pw_json)
+            if isinstance(data, list):
+                for entry in data:
+                    if not isinstance(entry, dict):
+                        continue
+                    url  = _pick(entry, FIELD_MAP_URL)
+                    user = _pick(entry, FIELD_MAP_USER)
+                    pwd  = _pick(entry, FIELD_MAP_PASS)
+                    if user or pwd:
+                        credentials.append(Credential(
+                            host=url,
+                            login=user,
+                            password=pwd,
+                            soft=soft_name
+                        ))
+            elif isinstance(data, dict):
+                for key, val in data.items():
+                    if isinstance(val, list):
+                        for entry in val:
+                            if not isinstance(entry, dict):
+                                continue
+                            url  = _pick(entry, FIELD_MAP_URL)
+                            user = _pick(entry, FIELD_MAP_USER)
+                            pwd  = _pick(entry, FIELD_MAP_PASS)
+                            if user or pwd:
+                                credentials.append(Credential(
+                                    host=url,
+                                    login=user,
+                                    password=pwd,
+                                    soft=soft_name
+                                ))
+
+    return credentials
+
+
+def count_json_cookies(folder: Path) -> int:
+    """Count cookies from all Browser_*/Cookies.json files"""
+    total = 0
+    for sub in folder.iterdir():
+        if not sub.is_dir() or not sub.name.lower().startswith('browser_'):
+            continue
+        for cname in ('Cookies.json', 'cookies.json'):
+            cf = sub / cname
+            if cf.exists():
+                data = _read_json_safe(cf)
+                if isinstance(data, list):
+                    total += len(data)
+                elif isinstance(data, dict):
+                    for v in data.values():
+                        if isinstance(v, list):
+                            total += len(v)
+                break
+    return total
+
+
+def _is_json_format(folder: Path) -> bool:
+    """Detect modern JSON-based stealer format"""
+    if (folder / 'Info.json').exists():
+        return True
+    for sub in folder.iterdir():
+        if sub.is_dir() and sub.name.lower().startswith('browser_'):
+            if (sub / 'Passwords.json').exists() or (sub / 'Cookies.json').exists():
+                return True
+    return False
+
+
 def find_log_folders(base_path: str) -> List[str]:
-    """Find all log folders"""
+    """Find all log folders (supports both classic txt and modern JSON formats)"""
     folders = []
     base = Path(base_path)
     
@@ -259,8 +404,9 @@ def find_log_folders(base_path: str) -> List[str]:
                 for name in ['information.txt', 'Information.txt', 'info.txt', 'Info.txt',
                             'System.txt', 'system.txt', 'UserInformation.txt']
             )
+            has_json_format = _is_json_format(item)
             
-            if has_passwords or has_info:
+            if has_passwords or has_info or has_json_format:
                 folders.append(str(item))
             else:
                 sub_folders = find_log_folders(str(item))
@@ -270,13 +416,23 @@ def find_log_folders(base_path: str) -> List[str]:
 
 
 def parse_log_folder(folder_path: str) -> Optional[ParsedLog]:
-    """Parse log folder"""
+    """Parse log folder (auto-detects classic txt or modern JSON format)"""
     folder = Path(folder_path)
     
     if not folder.exists():
         return None
-    
+
+    json_mode = _is_json_format(folder)
+
     credentials = []
+    system_info = SystemInfo()
+    cookies_count = 0
+
+    if json_mode:
+        system_info = parse_json_info(folder)
+        credentials = parse_json_passwords(folder)
+        cookies_count = count_json_cookies(folder)
+
     password_files = ['passwords.txt', 'Passwords.txt', 'passwords', 'Passwords',
                      'All Passwords.txt', 'all_passwords.txt', 'Passwords.csv',
                      'Browsers/passwords.txt', 'Browser/passwords.txt']
@@ -294,21 +450,23 @@ def parse_log_folder(folder_path: str) -> Optional[ParsedLog]:
                 except Exception:
                     pass
     
-    system_info = SystemInfo()
-    info_files = ['information.txt', 'Information.txt', 'info.txt', 'Info.txt',
-                 'System.txt', 'system.txt', 'UserInformation.txt', 'System Info.txt']
-    
-    for inf in info_files:
-        inf_path = folder / inf
-        if inf_path.exists():
-            try:
-                content = inf_path.read_text(encoding='utf-8', errors='ignore')
-                system_info = parse_system_info(content)
-                break
-            except Exception:
+    if not json_mode or not system_info.ip:
+        info_files = ['information.txt', 'Information.txt', 'info.txt', 'Info.txt',
+                     'System.txt', 'system.txt', 'UserInformation.txt', 'System Info.txt']
+        for inf in info_files:
+            inf_path = folder / inf
+            if inf_path.exists():
                 try:
-                    content = inf_path.read_text(encoding='latin-1', errors='ignore')
-                    system_info = parse_system_info(content)
+                    content = inf_path.read_text(encoding='utf-8', errors='ignore')
+                    txt_info = parse_system_info(content)
+                    if not json_mode:
+                        system_info = txt_info
+                    else:
+                        for f in ['country', 'ip', 'computer_name', 'user_name',
+                                  'windows', 'hwid', 'antivirus', 'processor', 'ram',
+                                  'videocard', 'resolution', 'date']:
+                            if not getattr(system_info, f):
+                                setattr(system_info, f, getattr(txt_info, f))
                     break
                 except Exception:
                     pass
@@ -319,17 +477,17 @@ def parse_log_folder(folder_path: str) -> Optional[ParsedLog]:
         if match:
             system_info.country = match.group(1)
     
-    cookies_count = 0
-    cookies_files = ['cookies.txt', 'Cookies.txt', 'cookies.sqlite', 'Cookies.sqlite',
-                    'Browsers/cookies.txt', 'Browser/cookies.txt']
-    for cf in cookies_files:
-        cf_path = folder / cf
-        if cf_path.exists():
-            try:
-                cookies_count = sum(1 for _ in open(cf_path, 'rb')) - 1
-            except Exception:
-                pass
-            break
+    if not json_mode:
+        cookies_files = ['cookies.txt', 'Cookies.txt', 'cookies.sqlite', 'Cookies.sqlite',
+                        'Browsers/cookies.txt', 'Browser/cookies.txt']
+        for cf in cookies_files:
+            cf_path = folder / cf
+            if cf_path.exists():
+                try:
+                    cookies_count = sum(1 for _ in open(cf_path, 'rb')) - 1
+                except Exception:
+                    pass
+                break
     
     return ParsedLog(
         folder_name=folder.name,

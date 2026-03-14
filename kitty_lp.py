@@ -270,18 +270,24 @@ def parse_json_info(folder: Path) -> SystemInfo:
                         return v.strip()
         return ""
 
-    info.country       = _get('country', 'location', 'geo')
-    info.ip            = _get('ip', 'external_ip', 'externalip', 'public_ip')
-    info.computer_name = _get('computer_name', 'computername', 'computer', 'hostname', 'pc')
-    info.user_name     = _get('user_name', 'username', 'user', 'account')
-    info.windows       = _get('windows', 'os', 'system', 'platform')
-    info.hwid          = _get('hwid', 'machine_id', 'machineid', 'uuid', 'guid')
-    info.antivirus     = _get('antivirus', 'av', 'defender')
-    info.processor     = _get('cpu', 'processor')
-    info.ram           = _get('ram', 'memory')
-    info.videocard     = _get('gpu', 'video', 'videocard', 'graphics')
-    info.resolution    = _get('resolution', 'screen')
-    info.date          = _get('date', 'time', 'timestamp')
+    info.country       = _get('country', 'location', 'geo', 'countrycode')
+    info.ip            = _get('ip', 'ipaddress', 'external_ip', 'externalip', 'public_ip', 'publicip')
+    info.computer_name = _get('computer_name', 'computername', 'computer', 'pc', 'machinename', 'devicename')
+    info.user_name     = _get('user_name', 'user', 'account', 'currentuser')
+    info.windows       = _get('windows', 'operatingsystem', 'os', 'system', 'platform', 'osversion')
+    info.hwid          = _get('hwid', 'machine_id', 'machineid', 'uuid', 'guid', 'sessionid', 'deviceid')
+    info.antivirus     = _get('antivirus', 'av', 'defender', 'security')
+    info.processor     = _get('cpu', 'processor', 'cpuname', 'cpu_name', 'processorname')
+    info.ram           = _get('ram', 'memory', 'ramsize', 'ram_size', 'totalmemory')
+    info.videocard     = _get('gpu', 'video', 'videocard', 'graphics', 'gpuname', 'gpu_name')
+    info.resolution    = _get('resolution', 'screen', 'screensize', 'screen_size', 'screenresolution')
+    info.date          = _get('date', 'createdat', 'created_at', 'timestamp', 'time', 'datetime')
+
+    if not info.computer_name:
+        info.computer_name = _get('username')
+
+    if not info.user_name:
+        info.user_name = _get('username')
 
     if not info.country:
         full_text = json.dumps(data)
@@ -296,9 +302,9 @@ def parse_json_passwords(folder: Path) -> List[Credential]:
     """Parse Passwords.json files from Browser_* subdirectories"""
     credentials = []
 
-    FIELD_MAP_URL  = ['url', 'uri', 'host', 'site', 'link', 'domain', 'origin']
-    FIELD_MAP_USER = ['login', 'username', 'user', 'email', 'mail', 'account', 'name']
-    FIELD_MAP_PASS = ['password', 'pass', 'pwd', 'secret']
+    FIELD_MAP_URL  = ['url', 'uri', 'host', 'hostname', 'site', 'link', 'domain', 'origin', 'address', 'web']
+    FIELD_MAP_USER = ['login', 'username', 'user', 'email', 'mail', 'account', 'name', 'login_name', 'user_name']
+    FIELD_MAP_PASS = ['password', 'pass', 'pwd', 'secret', 'passwd']
 
     def _pick(obj: dict, keys: list) -> str:
         for k in keys:

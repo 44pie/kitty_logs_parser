@@ -120,24 +120,15 @@ def parse_jsonl(filepath: str, cms_filter: str) -> list:
                 continue
 
             cdn_name = d.get('cdn_name', '') or classified['cdn_waf']
-            cdn_type = d.get('cdn_type', '')
 
             rows.append({
-                'domain':          d.get('host', ''),
-                'url':             d.get('url', ''),
-                'status_code':     d.get('status_code', ''),
-                'title':           d.get('title', ''),
-                'cms':             classified['cms'],
-                'server':          d.get('webserver', '') or classified['server'],
-                'cdn':             cdn_name,
-                'cdn_type':        cdn_type,
-                'analytics':       classified['analytics'],
-                'other_tech':      classified['other'],
-                'all_tech':        ' | '.join(tech_list),
-                'ip':              d.get('host_ip', ''),
-                'content_type':    d.get('content_type', ''),
-                'response_time':   d.get('time', ''),
-                'content_length':  d.get('content_length', ''),
+                'domain':      d.get('host', ''),
+                'ip':          d.get('host_ip', ''),
+                'status_code': d.get('status_code', ''),
+                'cms':         classified['cms'],
+                'server':      d.get('webserver', '') or classified['server'],
+                'cdn':         cdn_name,
+                'title':       d.get('title', ''),
             })
 
     print(f"Обработано: {total} строк | Пропущено: {skipped} | Результат: {len(rows)}")
@@ -149,12 +140,7 @@ def write_csv(rows: list, outfile: str):
         print("Нет данных для записи")
         return
 
-    fields = [
-        'domain', 'url', 'status_code', 'title',
-        'cms', 'server', 'cdn', 'cdn_type',
-        'analytics', 'other_tech', 'all_tech',
-        'ip', 'content_type', 'response_time', 'content_length',
-    ]
+    fields = ['domain', 'ip', 'status_code', 'cms', 'server', 'cdn', 'title']
 
     with open(outfile, 'w', encoding='utf-8', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=fields)

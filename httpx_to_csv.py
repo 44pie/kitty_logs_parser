@@ -15,13 +15,41 @@ import sys
 from pathlib import Path
 
 CMS_LIST = {
-    'prestashop', 'wordpress', 'woocommerce', 'shopify', 'magento',
-    'drupal', 'joomla', 'opencart', 'wix', 'squarespace', 'bigcommerce',
-    'typo3', 'contao', 'modx', 'bitrix', '1c-bitrix', 'weebly',
-    'ghost', 'craft cms', 'umbraco', 'kentico', 'sitecore',
-    'oscommerce', 'zen cart', 'cubecart', 'virtuemart', 'ecwid',
-    'cs-cart', 'x-cart', 'nopcommerce', 'spree', 'sylius',
-    'laravel', 'symfony', 'codeigniter', 'yii', 'django', 'ruby on rails',
+    'prestashop':    'PrestaShop',
+    'wordpress':     'WordPress',
+    'woocommerce':   'WooCommerce',
+    'shopify':       'Shopify',
+    'magento':       'Magento',
+    'drupal':        'Drupal',
+    'joomla':        'Joomla',
+    'opencart':      'OpenCart',
+    'wix':           'Wix',
+    'squarespace':   'Squarespace',
+    'bigcommerce':   'BigCommerce',
+    'typo3':         'TYPO3',
+    'contao':        'Contao',
+    'modx':          'MODX',
+    'bitrix':        'Bitrix',
+    'weebly':        'Weebly',
+    'ghost':         'Ghost',
+    'umbraco':       'Umbraco',
+    'sitecore':      'Sitecore',
+    'oscommerce':    'osCommerce',
+    'zen cart':      'Zen Cart',
+    'cubecart':      'CubeCart',
+    'virtuemart':    'VirtueMart',
+    'ecwid':         'Ecwid',
+    'cs-cart':       'CS-Cart',
+    'x-cart':        'X-Cart',
+    'nopcommerce':   'nopCommerce',
+    'spree':         'Spree',
+    'sylius':        'Sylius',
+    'laravel':       'Laravel',
+    'symfony':       'Symfony',
+    'codeigniter':   'CodeIgniter',
+    'yii':           'Yii',
+    'django':        'Django',
+    'ruby on rails': 'Ruby on Rails',
 }
 
 SERVER_LIST = {
@@ -51,48 +79,45 @@ def classify_tech(tech_list: list) -> dict:
         'server': '',
         'cdn_waf': '',
         'analytics': [],
-        'other': [],
     }
 
     for tech in tech_list:
         t = tech.lower().strip()
+        t_base = t.split(':')[0].split('/')[0].strip()
 
         matched = False
-        for cms in CMS_LIST:
-            if cms in t or t in cms:
+
+        for keyword, canonical in CMS_LIST.items():
+            if keyword in t_base:
                 if not result['cms']:
-                    result['cms'] = tech
+                    result['cms'] = canonical
                 matched = True
                 break
 
         if not matched:
             for srv in SERVER_LIST:
-                if srv in t or t in srv:
+                if srv in t_base:
                     if not result['server']:
-                        result['server'] = tech
+                        result['server'] = tech.split(':')[0].strip()
                     matched = True
                     break
 
         if not matched:
             for cdn in CDN_WAF_LIST:
-                if cdn in t or t in cdn:
+                if cdn in t_base:
                     if not result['cdn_waf']:
-                        result['cdn_waf'] = tech
+                        result['cdn_waf'] = tech.split(':')[0].strip()
                     matched = True
                     break
 
         if not matched:
             for an in ANALYTICS_LIST:
-                if an in t or t in an:
-                    result['analytics'].append(tech)
+                if an in t_base:
+                    result['analytics'].append(tech.split(':')[0].strip())
                     matched = True
                     break
 
-        if not matched:
-            result['other'].append(tech)
-
     result['analytics'] = ' | '.join(result['analytics'])
-    result['other'] = ' | '.join(result['other'])
     return result
 
 

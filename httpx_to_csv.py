@@ -218,7 +218,7 @@ def main():
     if rows:
         cms_stats = Counter(r['cms'] or 'Unknown' for r in rows)
         print("\nТоп CMS:")
-        for cms, count in cms_stats.most_common(15):
+        for cms, count in cms_stats.most_common(25):
             print(f"  {cms:<30} {count:>6}")
 
 
